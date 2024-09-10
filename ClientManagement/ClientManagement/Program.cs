@@ -1,8 +1,17 @@
+using ClientManagement.ClientData;
+using ClientManagement.Repository;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddNewtonsoftJson();
+builder.Services.AddDbContext<ClientDataContext>(options => options.UseSqlServer(
+builder.Configuration.
+    GetConnectionString("ClientDB")));
+builder.Services.AddTransient<IClientsRepository, ClientsRepository>();
+builder.Services.AddAutoMapper(typeof(ClientDataContext));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
