@@ -16,11 +16,35 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddDbContext<ClientManagementContext>(options => options.UseSqlServer(builder.Configuration.
     GetConnectionString("ClientDB")));
 
+builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<ClientManagementContext>()
+                .AddDefaultTokenProviders();
+
 builder.Services.AddTransient<IClientsRepository, ClientsRepository>();
+builder.Services.AddTransient<IClientLoginRepository, ClientLoginRepository>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddLazyCache();
 builder.Services.AddAutoMapper(typeof(ClientManagementContext));
+
+var tokenContext = builder.Configuration.GetSection("JWT");
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = tokenContext["Issuer"],
+        ValidAudience = tokenContext["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenContext["SecretKey"]))
+    };
+});
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -45,6 +69,8 @@ app.UseCors("corspolicy");
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseAuthentication();
 
 app.MapControllers();
 
