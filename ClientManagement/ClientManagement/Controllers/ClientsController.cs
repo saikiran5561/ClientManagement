@@ -18,13 +18,12 @@ namespace ClientManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllClients()
+        public async Task<IActionResult> GetAllClients([FromQuery] PagedClientResult pagedClientResult)
         {
-            var clients = await _clientsRepository.GetAllClientsAsync();
-
-            if (clients.Count == 0)
+            var clients = await _clientsRepository.GetAllClientsAsync(pagedClientResult);
+            if (clients.TotalCount == 0)
             {
-                return NotFound("No client is available");
+                return NotFound();
             }
             return Ok(clients);
         }
@@ -33,14 +32,9 @@ namespace ClientManagement.Controllers
         public async Task<IActionResult> GetClientById([FromRoute] int clientId)
         {
             var client = await _clientsRepository.GetClientByIdAsync(clientId);
-
             if (client == null)
             {
-                return NotFound("Entered client id is not found");
-            }
-            else if (client.ClientId <= 0)
-            {
-                return BadRequest();
+                return NotFound();
             }
             return Ok(client);
         }

@@ -1,8 +1,11 @@
 ﻿using AutoMapper;
+using ClientManagement.Caching;
 using ClientManagement.ClientData;
 using ClientManagement.Model;
+using LazyCache;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace ClientManagement.Repository
 {
@@ -10,25 +13,83 @@ namespace ClientManagement.Repository
     {
         private readonly ClientDataContext _clientDataContext;
         private readonly IMapper _mapper;
+        private readonly ICacheProvider _cacheProvider;
 
-        public ClientsRepository(ClientDataContext clientDataContext, IMapper mapper)
+        public ClientsRepository(ClientDataContext clientDataContext, IMapper mapper, ICacheProvider cacheProvider)
         {
             _clientDataContext = clientDataContext;
             _mapper = mapper;
+            _cacheProvider = cacheProvider;
         }
 
-        public async Task<List<ClientModel>> GetAllClientsAsync()
+        public async Task<PagedClientResult> GetAllClientsAsync(PagedClientResult client)
         {
-            var clients = await _clientDataContext.Clients.ToListAsync();
+            if (!_cacheProvider.TryGetValue(CacheKeys.Client, out PagedClientResult pagedClientResult))
+            {
+                var clientQuery = client.FilterBy?.ToLower();
 
-            return _mapper.Map<List<ClientModel>>(clients);
+                var clients = _clientDataContext.Clients.AsQueryable();
+
+                //Filtering
+                if (!string.IsNullOrWhiteSpace(clientQuery))
+                {
+                    clients = clients.Where(client => client.ClientName.ToLower().Contains(clientQuery) ||
+                                                             client.ClientId.Equals(clientQuery) ||
+                                                             client.Description.ToLower().Contains(clientQuery));
+                }
+
+                //Sorting
+                clients = client.SortBy switch
+                {
+                    "ClientName" => client.Descending ? clients.OrderByDescending(client => client.ClientName)
+                                                    : clients.OrderBy(client => client.ClientName),
+                    "Description" => client.Descending ? clients.OrderByDescending(client => client.Description)
+                                                      : clients.OrderBy(client => client.Description),
+                    "LicenceKey" => client.Descending ? clients.OrderByDescending(client => client.LicenceKey)
+                                                         : clients.OrderBy(client => client.LicenceKey),
+                    "LicenceStartDate" => client.Descending ? clients.OrderByDescending(client => client.LicenceStartDate)
+                                                          : clients.OrderBy(client => client.LicenceStartDate),
+                    _ => client.Descending ? clients.OrderByDescending(client => client.ClientId)
+                                               : clients.OrderBy(client => client.ClientId)
+                };
+
+                //Pagination
+                client.TotalCount = await clients.CountAsync();
+                var pagedClientData = await clients
+                    .Skip((client.Page - 1) * client.Limit)
+                    .ToListAsync();
+
+                client.Patients = _mapper.Map<List<ClientModel>>(pagedClientData);
+
+                var entryOptions = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpiration = DateTime.Now.AddSeconds(10),
+                    SlidingExpiration = TimeSpan.FromSeconds(10),
+                    Size = 2048
+                };
+                _cacheProvider.Set(CacheKeys.Client, client, entryOptions);
+                return client;
+            }
+            return pagedClientResult;
         }
 
         public async Task<ClientModel> GetClientByIdAsync(int clientId)
         {
-            var client = await _clientDataContext.Clients.FindAsync(clientId);
+            if (!_cacheProvider.TryGetValue(CacheKeys.Client, out ClientModel clientModel))
+            {
+                var client = await _clientDataContext.Clients.FindAsync(clientId);
 
-            return _mapper.Map<ClientModel>(client);
+                clientModel = _mapper.Map<ClientModel>(client);
+
+                var entryOption = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpiration = DateTime.Now.AddSeconds(30),
+                    SlidingExpiration = TimeSpan.FromSeconds(30),
+                    Size = 1024
+                };
+                _cacheProvider.Set(CacheKeys.Client, clientModel, entryOption);
+            }
+            return clientModel;
         }
 
         public async Task<int> AddClientAsync(ClientModel clientModel)

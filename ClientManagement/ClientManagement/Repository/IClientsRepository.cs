@@ -5,7 +5,7 @@ namespace ClientManagement.Repository
 {
     public interface IClientsRepository
     {
-        Task<List<ClientModel>> GetAllClientsAsync();
+        Task<PagedClientResult> GetAllClientsAsync(PagedClientResult patient);
         Task<ClientModel> GetClientByIdAsync(int clientId);
         Task<int> AddClientAsync(ClientModel clientModel);
         Task EditClientAsync(int patientId, ClientModel clientsModel);

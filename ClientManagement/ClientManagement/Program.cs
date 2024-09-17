@@ -1,6 +1,8 @@
 using ClientManagement.ClientData;
 using ClientManagement.Repository;
 using Microsoft.EntityFrameworkCore;
+using ClientManagement.Data;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +12,12 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 builder.Services.AddDbContext<ClientDataContext>(options => options.UseSqlServer(
 builder.Configuration.
     GetConnectionString("ClientDB")));
+builder.Services.AddDbContext<ClientManagementContext>(options => options.UseSqlServer(
+builder.Configuration.
+    GetConnectionString("ClientManagementContextConnection")));
+
+builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<ClientManagementContext>();
 builder.Services.AddTransient<IClientsRepository, ClientsRepository>();
 builder.Services.AddAutoMapper(typeof(ClientDataContext));
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
