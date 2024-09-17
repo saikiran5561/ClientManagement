@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using ClientManagement.ClientData;
-using ClientManagement.Model;
+using ClientManagement.Data;
+using ClientManagement.Models;
 
 namespace ClientManagement.Helper
 {

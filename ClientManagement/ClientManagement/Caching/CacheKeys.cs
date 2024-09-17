@@ -1,6 +1,6 @@
 ﻿namespace ClientManagement.Caching
 {
-    public class CacheKeys
+    public static class CacheKeys
     {
         public static string Client = "Client";
     }
