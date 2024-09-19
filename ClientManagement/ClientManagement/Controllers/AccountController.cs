@@ -7,11 +7,11 @@ namespace ClientManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ClientLoginController : ControllerBase
+    public class AccountController : ControllerBase
     {
-        private readonly IClientLoginRepository _clientLoginRepository;
+        private readonly IAccountRepository _clientLoginRepository;
 
-        public ClientLoginController(IClientLoginRepository clientLoginRepository)
+        public AccountController(IAccountRepository clientLoginRepository)
         {
             _clientLoginRepository = clientLoginRepository;
         }

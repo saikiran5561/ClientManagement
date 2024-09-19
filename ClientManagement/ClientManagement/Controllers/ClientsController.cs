@@ -1,5 +1,6 @@
 ﻿using ClientManagement.Models;
 using ClientManagement.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ namespace ClientManagement.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize]
     public class ClientsController : ControllerBase
     {
         private readonly IClientsRepository _clientsRepository;
@@ -18,7 +20,7 @@ namespace ClientManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllClients([FromQuery] PagedClientResult pagedClientResult)
+        public async Task<IActionResult> GetClients([FromQuery] PagedClientResult pagedClientResult)
         {
             var clients = await _clientsRepository.GetAllClientsAsync(pagedClientResult);
 

@@ -6,6 +6,7 @@ using System.Text;
 using System.Configuration;
 using ClientManagement.Data;
 using ClientManagement.Repository;
+using ClientManagement.Helper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,11 +21,11 @@ builder.Services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkSto
                 .AddDefaultTokenProviders();
 
 builder.Services.AddTransient<IClientsRepository, ClientsRepository>();
-builder.Services.AddTransient<IClientLoginRepository, ClientLoginRepository>();
+builder.Services.AddTransient<IAccountRepository, AccountRepository>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddLazyCache();
-builder.Services.AddAutoMapper(typeof(ClientManagementContext));
+builder.Services.AddAutoMapper(typeof(ApplicationMapper));
 
 var tokenContext = builder.Configuration.GetSection("JWT");
 builder.Services.AddAuthentication(options =>

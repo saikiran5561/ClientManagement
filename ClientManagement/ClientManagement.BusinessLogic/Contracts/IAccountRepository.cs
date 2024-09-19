@@ -2,7 +2,7 @@
 
 namespace ClientManagement.Repository
 {
-    public interface IClientLoginRepository
+    public interface IAccountRepository
     {
         Task<string> LoginAsync(SignInModel signInModel);
         Task<string> SignUpAsync(SignUpModel signUpModel);
