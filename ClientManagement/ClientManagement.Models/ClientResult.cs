@@ -1,6 +1,6 @@
 ﻿namespace ClientManagement.Models
 {
-    public class PagedClientResult
+    public class ClientResult
     {
         public string? FilterBy { get; set; }
         public string? SortBy { get; set; }

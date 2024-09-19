@@ -20,7 +20,7 @@ namespace ClientManagement.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetClients([FromQuery] PagedClientResult pagedClientResult)
+        public async Task<IActionResult> GetClients([FromQuery] ClientResult pagedClientResult)
         {
             var clients = await _clientsRepository.GetAllClientsAsync(pagedClientResult);
 

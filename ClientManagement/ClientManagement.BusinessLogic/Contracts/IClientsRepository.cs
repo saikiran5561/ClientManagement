@@ -10,7 +10,7 @@ namespace ClientManagement.Repository
         Task EditClientAsync(int clientId, ClientModel clientsModel);
         Task EditClientPatchAsync(int clientId, JsonPatchDocument<ClientModel> clientsModel);
         Task<bool> EditClientsAsync(int id);
-        Task<PagedClientResult> GetAllClientsAsync(PagedClientResult client);
+        Task<ClientResult> GetAllClientsAsync(ClientResult client);
         Task<ClientModel> GetClientByIdAsync(int clientId);
     }
 }

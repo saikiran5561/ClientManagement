@@ -22,9 +22,9 @@ namespace ClientManagement.Repository
             _cacheProvider = cacheProvider;
         }
 
-        public async Task<PagedClientResult> GetAllClientsAsync(PagedClientResult client)
+        public async Task<ClientResult> GetAllClientsAsync(ClientResult client)
         {
-            if (!_cacheProvider.TryGetValue(CacheKeys.Client, out PagedClientResult pagedClientResult))
+            if (!_cacheProvider.TryGetValue(CacheKeys.Client, out ClientResult pagedClientResult))
             {
                 var clientQuery = client.FilterBy?.ToLower();
 
