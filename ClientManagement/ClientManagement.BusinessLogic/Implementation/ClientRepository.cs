@@ -24,8 +24,7 @@ namespace ClientManagement.Repository
 
         public async Task<ClientResult> GetAllClientsAsync(ClientResult client)
         {
-            if (!_cacheProvider.TryGetValue(CacheKeys.Client, out ClientResult pagedClientResult))
-            {
+            
                 var clientQuery = client.FilterBy?.ToLower();
 
                 var clients = _clientDataContext.Clients.AsQueryable();
@@ -64,13 +63,11 @@ namespace ClientManagement.Repository
                 };
                 _cacheProvider.Set(CacheKeys.Client, client, entryOptions);
                 return client;
-            }
-            return pagedClientResult;
         }
 
         public async Task<ClientModel> GetClientByIdAsync(int clientId)
         {
-            if (!_cacheProvider.TryGetValue(CacheKeys.Client, out ClientModel clientModel))
+            if (!_cacheProvider.TryGetValue(string.Format(CacheKeys.Client, clientId), out ClientModel clientModel))
             {
                 var client = await _clientDataContext.Clients.FindAsync(clientId);
 
@@ -78,11 +75,11 @@ namespace ClientManagement.Repository
 
                 var entryOption = new MemoryCacheEntryOptions
                 {
-                    AbsoluteExpiration = DateTime.Now.AddSeconds(30),
-                    SlidingExpiration = TimeSpan.FromSeconds(30),
-                    Size = 1024
+                    AbsoluteExpiration = DateTime.Now.AddSeconds(CacheKeys.AbsoluteExpiration),
+                    SlidingExpiration = TimeSpan.FromSeconds(CacheKeys.SlidingExpiration),
+                    Size = CacheKeys.EntryOptionsSize
                 };
-                _cacheProvider.Set(CacheKeys.Client, clientModel, entryOption);
+                _cacheProvider.Set(string.Format(CacheKeys.Client, clientId), clientModel, entryOption);
             }
             return clientModel;
         }
@@ -97,31 +94,20 @@ namespace ClientManagement.Repository
             return client.ClientId;
         }
 
-        public async Task EditClientAsync(int clientId, ClientModel clientsModel)
+        public async Task EditClientAsync(Client existingClient, ClientModel clientsModel)
         {
-            var client = await _clientDataContext.Clients.FindAsync(clientId);
-
-            client.UpdatedDate = DateTime.Now;
-            _mapper.Map(clientsModel, client);
+            existingClient.UpdatedDate = DateTime.Now;
+            _mapper.Map(clientsModel, existingClient);
             await _clientDataContext.SaveChangesAsync();
         }
 
-        public async Task<bool> EditClientsAsync(int id)
+        public async Task EditClientPatchAsync(Client existingClint, JsonPatchDocument<ClientModel> clientsModel)
         {
-            var client = await _clientDataContext.Clients.AnyAsync(clients => clients.ClientId == id);
+            var client = _mapper.Map<ClientModel>(existingClint);
 
-            return client;
-        }
-
-        public async Task EditClientPatchAsync(int clientId, JsonPatchDocument<ClientModel> clientsModel)
-        {
-            var client = await _clientDataContext.Clients.FindAsync(clientId);
-
-            var existingClient = _mapper.Map<ClientModel>(client);
-
-            clientsModel.ApplyTo(existingClient);
-            client.UpdatedDate = DateTime.Now;
-            _mapper.Map(existingClient, client);
+            clientsModel.ApplyTo(client);
+            existingClint.UpdatedDate = DateTime.Now;
+            _mapper.Map(client, existingClint);
             await _clientDataContext.SaveChangesAsync();
         }
 
@@ -133,6 +119,13 @@ namespace ClientManagement.Repository
             await _clientDataContext.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<Client> GetExistingClient(int clientId)
+        {
+            var existingClient = await _clientDataContext.Clients.FirstOrDefaultAsync(client => client.ClientId == clientId);
+
+            return existingClient;
         }
     }
 }

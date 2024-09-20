@@ -1,4 +1,5 @@
-﻿using ClientManagement.Models;
+﻿using ClientManagement.Data;
+using ClientManagement.Models;
 using ClientManagement.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -57,34 +58,28 @@ namespace ClientManagement.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> EditClientDetails([FromBody] ClientModel clientModel, [FromRoute] int id)
+        public async Task<IActionResult> EditClientDetails([FromBody] ClientModel clientModel)
         {
-            bool client = await _clientsRepository.EditClientsAsync(id);
-            if (!client)
+            var client = await _clientsRepository.GetExistingClient(clientModel.ClientId);
+            if (client == null)
             {
-                return NotFound("Entered client id is not found");
+                return BadRequest("Entered client id is not found");
             }
-            else
-            {
-                await _clientsRepository.EditClientAsync(id, clientModel);
-                return Ok();
-            }
+            await _clientsRepository.EditClientAsync(client, clientModel);
+            return Ok();
         }
 
         [HttpPatch("{id}")]
         public async Task<IActionResult> EditClientPatch([FromBody] JsonPatchDocument<ClientModel> clientModel,
             [FromRoute] int id)
         {
-            bool client = await _clientsRepository.EditClientsAsync(id);
-            if (!client)
+            var client = await _clientsRepository.GetExistingClient(id);
+            if (client == null)
             {
-                return NotFound("Entered client id is not found");
+                return BadRequest("Entered client id is not found");
             }
-            else
-            {
-                await _clientsRepository.EditClientPatchAsync(id, clientModel);
-                return Ok();
-            }
+            await _clientsRepository.EditClientPatchAsync(client, clientModel);
+            return Ok();
         }
 
         [HttpDelete("{clientId}")]

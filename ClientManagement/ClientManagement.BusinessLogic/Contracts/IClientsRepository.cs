@@ -1,4 +1,5 @@
-﻿using ClientManagement.Models;
+﻿using ClientManagement.Data;
+using ClientManagement.Models;
 using Microsoft.AspNetCore.JsonPatch;
 
 namespace ClientManagement.Repository
@@ -7,10 +8,10 @@ namespace ClientManagement.Repository
     {
         Task<int> AddClientAsync(ClientModel clientModel);
         Task<bool> DeleteClientAsync(int clientId);
-        Task EditClientAsync(int clientId, ClientModel clientsModel);
-        Task EditClientPatchAsync(int clientId, JsonPatchDocument<ClientModel> clientsModel);
-        Task<bool> EditClientsAsync(int id);
+        Task EditClientAsync(Client existingClient, ClientModel clientsModel);
+        Task EditClientPatchAsync(Client existingClint, JsonPatchDocument<ClientModel> clientsModel);
         Task<ClientResult> GetAllClientsAsync(ClientResult client);
         Task<ClientModel> GetClientByIdAsync(int clientId);
+        Task<Client> GetExistingClient(int clientId);
     }
 }
