@@ -6,6 +6,7 @@ using LazyCache;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using System.Linq.Dynamic.Core;
 
 namespace ClientManagement.Repository
 {
@@ -24,7 +25,7 @@ namespace ClientManagement.Repository
 
         public async Task<ClientResult> GetAllClientsAsync(ClientResult client)
         {
-            var clientQuery = client.FilterBy?.ToLower();
+            var clientQuery = client.FilterBy?.Split(' ')[0];
 
             var clients = _clientDataContext.Clients.AsQueryable();
 
@@ -36,15 +37,14 @@ namespace ClientManagement.Repository
             }
 
             //Sorting
-            clients = client.SortBy switch
+            if (!string.IsNullOrWhiteSpace(client.SortBy))
             {
-                "ClientName" => client.Descending ? clients.OrderByDescending(client => client.ClientName)
-                                                : clients.OrderBy(client => client.ClientName),
-                "Description" => client.Descending ? clients.OrderByDescending(client => client.Description)
-                                                  : clients.OrderBy(client => client.Description),
-                _ => client.Descending ? clients.OrderByDescending(client => client.ClientId)
-                                           : clients.OrderBy(client => client.ClientId)
-            };
+                clients = clients.OrderBy(client.SortBy);
+            }
+            else
+            {
+                clients = clients.OrderBy(client => client.ClientId);
+            }
 
             //Pagination
             client.TotalCount = await clients.CountAsync();
@@ -52,15 +52,8 @@ namespace ClientManagement.Repository
                 .Skip((client.Page - 1) * client.Limit)
                 .ToListAsync();
 
-            client.Patients = _mapper.Map<List<ClientModel>>(pagedClientData);
+            client.Clients = _mapper.Map<List<ClientModel>>(pagedClientData);
 
-            var entryOptions = new MemoryCacheEntryOptions
-            {
-                AbsoluteExpiration = DateTime.Now.AddSeconds(10),
-                SlidingExpiration = TimeSpan.FromSeconds(10),
-                Size = 2048
-            };
-            _cacheProvider.Set(CacheKeys.Client, client, entryOptions);
             return client;
         }
 

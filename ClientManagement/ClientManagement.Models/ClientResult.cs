@@ -7,7 +7,7 @@
         public bool Descending { get; set; } = false;
         public int Page { get; set; } = 1;
         public int Limit { get; set; } = 5;
-        public List<ClientModel> Patients { get; set; } = new List<ClientModel>();
+        public List<ClientModel> Clients { get; set; } = new List<ClientModel>();
         public int TotalCount { get; set; }
         public int TotalPages => (int)Math.Ceiling((double)TotalCount / Limit);
     }
