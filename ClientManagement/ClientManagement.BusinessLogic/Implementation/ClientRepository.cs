@@ -24,45 +24,44 @@ namespace ClientManagement.Repository
 
         public async Task<ClientResult> GetAllClientsAsync(ClientResult client)
         {
-            
-                var clientQuery = client.FilterBy?.ToLower();
+            var clientQuery = client.FilterBy?.ToLower();
 
-                var clients = _clientDataContext.Clients.AsQueryable();
+            var clients = _clientDataContext.Clients.AsQueryable();
 
-                //Filtering
-                if (!string.IsNullOrWhiteSpace(clientQuery))
-                {
-                    clients = clients.Where(client => client.ClientName.ToLower().Contains(clientQuery) ||
-                                                             client.Description.ToLower().Contains(clientQuery));
-                }
+            //Filtering
+            if (!string.IsNullOrWhiteSpace(clientQuery))
+            {
+                clients = clients.Where(client => client.ClientName.ToLower().Contains(clientQuery) ||
+                                                         client.Description.ToLower().Contains(clientQuery));
+            }
 
-                //Sorting
-                clients = client.SortBy switch
-                {
-                    "ClientName" => client.Descending ? clients.OrderByDescending(client => client.ClientName)
-                                                    : clients.OrderBy(client => client.ClientName),
-                    "Description" => client.Descending ? clients.OrderByDescending(client => client.Description)
-                                                      : clients.OrderBy(client => client.Description),
-                    _ => client.Descending ? clients.OrderByDescending(client => client.ClientId)
-                                               : clients.OrderBy(client => client.ClientId)
-                };
+            //Sorting
+            clients = client.SortBy switch
+            {
+                "ClientName" => client.Descending ? clients.OrderByDescending(client => client.ClientName)
+                                                : clients.OrderBy(client => client.ClientName),
+                "Description" => client.Descending ? clients.OrderByDescending(client => client.Description)
+                                                  : clients.OrderBy(client => client.Description),
+                _ => client.Descending ? clients.OrderByDescending(client => client.ClientId)
+                                           : clients.OrderBy(client => client.ClientId)
+            };
 
-                //Pagination
-                client.TotalCount = await clients.CountAsync();
-                var pagedClientData = await clients
-                    .Skip((client.Page - 1) * client.Limit)
-                    .ToListAsync();
+            //Pagination
+            client.TotalCount = await clients.CountAsync();
+            var pagedClientData = await clients
+                .Skip((client.Page - 1) * client.Limit)
+                .ToListAsync();
 
-                client.Patients = _mapper.Map<List<ClientModel>>(pagedClientData);
+            client.Patients = _mapper.Map<List<ClientModel>>(pagedClientData);
 
-                var entryOptions = new MemoryCacheEntryOptions
-                {
-                    AbsoluteExpiration = DateTime.Now.AddSeconds(10),
-                    SlidingExpiration = TimeSpan.FromSeconds(10),
-                    Size = 2048
-                };
-                _cacheProvider.Set(CacheKeys.Client, client, entryOptions);
-                return client;
+            var entryOptions = new MemoryCacheEntryOptions
+            {
+                AbsoluteExpiration = DateTime.Now.AddSeconds(10),
+                SlidingExpiration = TimeSpan.FromSeconds(10),
+                Size = 2048
+            };
+            _cacheProvider.Set(CacheKeys.Client, client, entryOptions);
+            return client;
         }
 
         public async Task<ClientModel> GetClientByIdAsync(int clientId)
